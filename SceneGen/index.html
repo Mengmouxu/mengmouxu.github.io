@@ -8,6 +8,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SceneGen: Single-Image 3D Scene Generation</title>
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/images/icon.png">
+  <link rel="shortcut icon" type="image/png" href="assets/images/icon.png">
+  <link rel="apple-touch-icon" href="assets/images/icon.png">
+
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
   <script>
@@ -1013,7 +1018,7 @@ Processing Time: 2.3 seconds`;
                     <span class="icon">
                         <i class="fab fa-github"></i>
                     </span>
-                  <span>Code (Coming Soon)</span>
+                  <span>Code (In Progress)</span>
                 </a>
             </span>
             </div>
@@ -1061,6 +1066,9 @@ Processing Time: 2.3 seconds`;
           <h2 class="title is-3"><span class="dvima"><span class="emoji">🎨</span> Interactive Results Gallery</span></h2>
           <p style="font-size: 125%">
             Explore SceneGen's 3D scene generation results. Click on any example below to view the detailed generation process and results.
+            <p class="content"></p>
+              To interact with the 3D models, click and drag to rotate the view, scroll (or pinch) to zoom in and out, use the “🔄 Reset View” button to return to the default orientation, click “🔲 Wireframe” to toggle the wireframe overlay, and press “📷 Screenshot” to download the current view as an image.
+            </p>
           </p>
         </div>
       </div>
@@ -1300,22 +1308,13 @@ Processing Time: 2.3 seconds`;
             </div>
         </div>
         <!--/ Overview. -->
+    </div>
+</section>
 
-        <!-- Comparison. -->
-        <!-- <div class="columns is-centered" id="comparison">
-            <div class="column is-full-width">
-                <h2 class="title is-3">Comparison with Existing Methods</h2>
-                <div class="content has-text-justified">
-                    <p>
-                        Existing methods typically require segmenting target objects from the scene image (a), two-stage methods sequentially retrieve or generate individual assets (b), while methods like MIDI directly generate multiple assets but suffer from blurry details (c). In contrast, our SceneGen jointly synthesizes the geometry, texture, and spatial positions of multiple assets in a single feedforward pass (d).
-                    </p>
-                </div>
-            </div>
-        </div> -->
-        <!--/ Comparison. -->
-
+<section class="section" id="architecture">
+    <div class="container is-max-desktop">
         <!-- Architecture. -->
-        <div class="columns is-centered" id="architecture">
+        <div class="columns is-centered">
             <div class="column is-full-width">
                 <h2 class="title is-3">Architecture</h2>
                 <div class="content has-text-justified">
@@ -1329,9 +1328,13 @@ Processing Time: 2.3 seconds`;
             </div>
         </div>
         <!--/ Architecture. -->
+    </div>
+</section>
 
+<section class="section" id="results">
+    <div class="container is-max-desktop">
         <!-- Results. -->
-        <div class="columns is-centered" id="results">
+        <div class="columns is-centered">
             <div class="column is-full-width">
                 <h2 class="title is-3">Results</h2>
                 <div class="content has-text-justified">
@@ -1372,7 +1375,11 @@ Processing Time: 2.3 seconds`;
 <section class="section" id="bibtex">
   <div class="container is-max-desktop content">
     <h2 class="title">BibTeX</h2>
-    <pre><code>@article{scenegen2024,
+    <pre><code>@article{meng2025scenegen,
+  author    = {Meng, Yanxu and Wu, Haoning and Zhang, Ya and Xie, Weidi},
+  title     = {SceneGen: Single-Image 3D Scene Generation in One Feedforward Pass},
+  journal   = {arXiv preprint arXiv:2508.xxxxx},
+  year      = {2025},
 }</code></pre>
   </div>
 </section>
