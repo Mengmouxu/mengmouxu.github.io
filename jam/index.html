@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1" name="viewport">
+  <meta content="JAM learns predictive visual states and language-guided control from multi-view observations." name="description">
+  <title>
+   JAM: A Joint-Embedding Predictive Action Model for Visual Robot Control
+  </title>
+  <link href="static/css/bulma.min.css" rel="stylesheet">
+  <link href="static/css/index.css" rel="stylesheet">
+  <link href="styles.css?v=9302c50c65" rel="stylesheet">
+  <script defer src="hero.js">
+  </script>
+  <script defer src="gallery.js?v=0b144cc7e3">
+  </script>
+ </head>
+ <body id="top">
+  <section class="hero is-large" id="hero">
+   <div class="hero-teaser">
+    <img alt="Multi-view observations become scene tokens. Their latent trajectories support predicting future visual states and actions." fetchpriority="high" height="1048" src="assets/hero/teaser.webp" width="2920">
+   </div>
+   <div class="hero-body">
+    <div class="container is-max-desktop">
+     <div class="columns is-centered">
+      <div class="column has-text-centered">
+       <h1 class="title is-1 publication-title">
+        <span class="project-name"><span class="visually-hidden">JAM</span><span aria-hidden="true"><span class="project-letter">J</span><span class="project-letter">A</span><span class="project-letter">M</span></span></span>
+        <span class="paper-title">
+         A Joint-Embedding Predictive Action Model for Visual Robot Control
+        </span>
+       </h1>
+       <div class="publication-authors">
+        <span class="author-block">
+         <a href="https://github.com/Mengmouxu">
+          Yanxu Meng</a><sup>*</sup>,
+        </span>
+        <span class="author-block">
+         <a href="https://go2heart.github.io/">
+          Yibin Yan</a><sup>*</sup>,
+        </span>
+        <span class="author-block">
+         <a href="https://annzhanglion.github.io/">
+          Ya Zhang
+         </a>
+         ,
+        </span>
+        <span class="author-block">
+         <a href="https://weidixie.github.io/">
+          Weidi Xie</a><sup>&dagger;</sup></span>
+       </div>
+       <div class="publication-authors affiliation">
+        <span class="author-block">
+         School of Artificial Intelligence, Shanghai Jiao Tong University
+        </span>
+       </div>
+       <div class="publication-authors author-notes">
+        <span class="author-block">
+         <sup>
+          *
+         </sup>
+         Equal contribution&nbsp;&nbsp;&nbsp;
+         <sup>
+          &dagger;
+         </sup>
+         Corresponding author
+        </span>
+       </div>
+       <div class="column has-text-centered">
+        <div aria-label="Project resources" class="publication-links">
+         <button class="button is-normal is-rounded is-dark" disabled title="Link pending" type="button">
+          Paper
+         </button>
+         <button class="button is-normal is-rounded is-dark" disabled title="Link pending" type="button">
+          Code
+         </button>
+         <button class="button is-normal is-rounded is-dark" disabled title="Link pending" type="button">
+          Hugging Face
+         </button>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </section>
+  <main>
+   <nav aria-label="On this page" class="section-nav page-width">
+    <a href="#demo">Rollouts</a>
+    <a href="#decoded-predictions">Forecasts</a>
+    <a href="#architecture">Method</a>
+    <a href="#results">Results</a>
+    <a href="#representations">Representations</a>
+   </nav>
+   <section class="section" id="abstract">
+    <div class="page-width abstract-content">
+     <h2 class="title is-3">Abstract</h2>
+     <p>World action models (WAMs) provide temporal supervision for robot control by predicting how observations evolve in demonstrations. Existing approaches, however, commonly predict targets in a fixed visual representation space, or rely on costly sampling-based planning over visual goals rather than direct language-guided control. We introduce JAM, a Joint-Embedding Predictive Action Model for multi-view, language-guided robot control that encodes each observation into a single state token for causal modeling over the observation history. Trained end-to-end with transition and action losses, JAM learns a single representation for both dynamics and control. Within this embedding space, the shared causal predictor serves as both a world model and a control policy. Given an action segment, it forecasts the next state transition; given a language instruction, it jointly generates an action chunk and predicts the resulting state change. At deployment, our 0.09B policy generates action chunks in closed loop from RGB observations and language instructions, without proprioceptive input. With a single forward pass per chunk, it runs 10.1&times; and 20.1&times; faster than &pi;<sub>0.5</sub> and Fast-WAM, respectively, while achieving 98.4% average success on LIBERO. On RoboTwin 2.0, a 0.37B variant reaches 77.62% average success.</p>
+    </div>
+   </section>
+   <section class="section media-section" id="demo">
+    <div class="page-width">
+     <h2 class="title is-3">Closed-loop rollouts</h2>
+     <div class="gallery-group">
+      <div class="media-rail">
+       <div class="rail-heading">
+        <h3 class="gallery-title">
+         RoboTwin 2.0
+        </h3>
+        <div class="rail-nav">
+         <button aria-controls="robotwin-2-0-clips" aria-label="Previous RoboTwin 2.0 videos" class="rail-arrow previous" hidden type="button">
+         </button>
+         <button aria-controls="robotwin-2-0-clips" aria-label="More RoboTwin 2.0 videos" class="rail-arrow next" hidden type="button">
+         </button>
+        </div>
+       </div>
+       <div class="media-viewport">
+        <div aria-label="RoboTwin 2.0 videos" class="media-track" id="robotwin-2-0-clips" role="region" tabindex="0">
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Pick up two bottles" controls height="960" playsinline poster="assets/multiview/pick_dual_bottles.webp" preload="none" width="1920">
+            <source src="assets/multiview/pick_dual_bottles.webm" type="video/webm">
+            <source src="assets/multiview/pick_dual_bottles.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Pick up two bottles
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Hand over a block" controls height="960" playsinline poster="assets/multiview/handover_block.webp" preload="none" width="1920">
+            <source src="assets/multiview/handover_block.webm" type="video/webm">
+            <source src="assets/multiview/handover_block.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Hand over a block
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Place two cans in a box" controls height="960" playsinline poster="assets/multiview/place_cans_plasticbox.webp" preload="none" width="1920">
+            <source src="assets/multiview/place_cans_plasticbox.webm" type="video/webm">
+            <source src="assets/multiview/place_cans_plasticbox.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Place two cans in a box
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Place bread in a skillet" controls height="960" playsinline poster="assets/multiview/place_bread_skillet.webp" preload="none" width="1920">
+            <source src="assets/multiview/place_bread_skillet.webm" type="video/webm">
+            <source src="assets/multiview/place_bread_skillet.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Place bread in a skillet
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Strike a block with a hammer" controls height="960" playsinline poster="assets/multiview/beat_block_hammer.webp" preload="none" width="1920">
+            <source src="assets/multiview/beat_block_hammer.webm" type="video/webm">
+            <source src="assets/multiview/beat_block_hammer.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Strike a block with a hammer
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Stamp a seal" controls height="960" playsinline poster="assets/multiview/stamp_seal.webp" preload="none" width="1920">
+            <source src="assets/multiview/stamp_seal.webm" type="video/webm">
+            <source src="assets/multiview/stamp_seal.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Stamp a seal
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Open a laptop" controls height="960" playsinline poster="assets/multiview/open_laptop.webp" preload="none" width="1920">
+            <source src="assets/multiview/open_laptop.webm" type="video/webm">
+            <source src="assets/multiview/open_laptop.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Open a laptop
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Place a burger and fries on a tray" controls height="960" playsinline poster="assets/multiview/place_burger_fries.webp" preload="none" width="1920">
+            <source src="assets/multiview/place_burger_fries.webm" type="video/webm">
+            <source src="assets/multiview/place_burger_fries.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Place a burger and fries on a tray
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Scan an object" controls height="960" playsinline poster="assets/multiview/scan_object.webp" preload="none" width="1920">
+            <source src="assets/multiview/scan_object.webm" type="video/webm">
+            <source src="assets/multiview/scan_object.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Scan an object
+          </figcaption>
+         </figure>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div class="gallery-group">
+      <div class="media-rail">
+       <div class="rail-heading">
+        <h3 class="gallery-title">
+         LIBERO
+        </h3>
+        <div class="rail-nav">
+         <button aria-controls="libero-clips" aria-label="Previous LIBERO videos" class="rail-arrow previous" hidden type="button">
+         </button>
+         <button aria-controls="libero-clips" aria-label="More LIBERO videos" class="rail-arrow next" hidden type="button">
+         </button>
+        </div>
+       </div>
+       <div class="media-viewport">
+        <div aria-label="LIBERO videos" class="media-track" id="libero-clips" role="region" tabindex="0">
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Move a bowl from drawer to plate" controls height="768" playsinline poster="assets/multiview/libero_bowl.webp" preload="none" width="1536">
+            <source src="assets/multiview/libero_bowl.webm" type="video/webm">
+            <source src="assets/multiview/libero_bowl.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Move a bowl from drawer to plate
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Turn on the stove and place the moka pot" controls height="768" playsinline poster="assets/multiview/libero_stove.webp" preload="none" width="1536">
+            <source src="assets/multiview/libero_stove.webm" type="video/webm">
+            <source src="assets/multiview/libero_stove.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Turn on the stove and place the moka pot
+          </figcaption>
+         </figure>
+         <figure class="video-tile">
+          <div class="video-frame">
+           <video aria-label="Place a bowl in the drawer and close it" controls height="768" playsinline poster="assets/multiview/libero_drawer.webp" preload="none" width="1536">
+            <source src="assets/multiview/libero_drawer.webm" type="video/webm">
+            <source src="assets/multiview/libero_drawer.mp4" type="video/mp4">
+            Your browser does not support video playback.
+           </video>
+          </div>
+          <figcaption>
+           Place a bowl in the drawer and close it
+          </figcaption>
+         </figure>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </section>
+   <section class="section media-section" id="decoded-predictions">
+    <div class="page-width">
+     <div class="media-rail showcase-rail">
+      <div class="rail-heading">
+       <h2 class="title is-3">
+        Forecasts and latent motion
+       </h2>
+       <div class="rail-nav">
+        <button aria-controls="forecast-and-latent-dynamics-clips" aria-label="Previous Forecast and latent dynamics videos" class="rail-arrow previous" hidden type="button">
+        </button>
+        <button aria-controls="forecast-and-latent-dynamics-clips" aria-label="More Forecast and latent dynamics videos" class="rail-arrow next" hidden type="button">
+        </button>
+       </div>
+      </div>
+      <p class="comparison-note">
+       Rendered RGB shows the execution. The middle panel decodes the future scene token predicted by the policy. The 3D trajectory follows the observed scene tokens as the policy replans.
+      </p>
+      <div class="media-viewport">
+       <div aria-label="Forecast and latent dynamics videos" class="media-track" id="forecast-and-latent-dynamics-clips" role="region" tabindex="0">
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Place a burger and fries on a tray, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-place_burger_fries.webp?v=f4b5045592" preload="none" width="1936">
+           <source src="assets/motion/motion-place_burger_fries.webm?v=9c30b17a5b" type="video/webm">
+           <source src="assets/motion/motion-place_burger_fries.mp4?v=a232594aa4" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Place a burger and fries on a tray
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Hand over a block, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-handover_block.webp?v=4ec534cf43" preload="none" width="1936">
+           <source src="assets/motion/motion-handover_block.webm?v=3a1eddd346" type="video/webm">
+           <source src="assets/motion/motion-handover_block.mp4?v=f06c6bdaec" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Hand over a block
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Place two cans in a box, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-place_cans_plasticbox.webp?v=a514465b3c" preload="none" width="1936">
+           <source src="assets/motion/motion-place_cans_plasticbox.webm?v=51ea616eae" type="video/webm">
+           <source src="assets/motion/motion-place_cans_plasticbox.mp4?v=da70d0cf4d" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Place two cans in a box
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Pick up two bottles, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-pick_dual_bottles.webp?v=bd14abc390" preload="none" width="1936">
+           <source src="assets/motion/motion-pick_dual_bottles.webm?v=bfe8460caf" type="video/webm">
+           <source src="assets/motion/motion-pick_dual_bottles.mp4?v=16f6382385" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Pick up two bottles
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Scan an object, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-scan_object.webp?v=26b4340cae" preload="none" width="1936">
+           <source src="assets/motion/motion-scan_object.webm?v=96b170f68f" type="video/webm">
+           <source src="assets/motion/motion-scan_object.mp4?v=29ff0c5e7e" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Scan an object
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Place bread in a skillet, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-place_bread_skillet.webp?v=891cdca60c" preload="none" width="1936">
+           <source src="assets/motion/motion-place_bread_skillet.webm?v=f38c73417f" type="video/webm">
+           <source src="assets/motion/motion-place_bread_skillet.mp4?v=0299acb696" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Place bread in a skillet
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Strike a block with a hammer, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-beat_block_hammer.webp?v=bdbe65f2a9" preload="none" width="1936">
+           <source src="assets/motion/motion-beat_block_hammer.webm?v=37260c517b" type="video/webm">
+           <source src="assets/motion/motion-beat_block_hammer.mp4?v=765a900ee4" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Strike a block with a hammer
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Open a laptop, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-open_laptop.webp?v=a2a092cb99" preload="none" width="1936">
+           <source src="assets/motion/motion-open_laptop.webm?v=e1934de90d" type="video/webm">
+           <source src="assets/motion/motion-open_laptop.mp4?v=d337878f90" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Open a laptop
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Stamp a seal, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-stamp_seal.webp?v=85a1334eb5" preload="none" width="1936">
+           <source src="assets/motion/motion-stamp_seal.webm?v=4df40cf394" type="video/webm">
+           <source src="assets/motion/motion-stamp_seal.mp4?v=d2a14864c2" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Stamp a seal
+         </figcaption>
+        </figure>
+        <figure class="decode-example">
+         <div class="decode-view-labels">
+          <span>
+           Rendered RGB
+          </span>
+          <span>
+           Decoded forecast
+          </span>
+          <span>
+           3D PCA
+          </span>
+         </div>
+         <div class="video-frame">
+          <video aria-label="Ring a bell, rendered RGB, decoded forecast and latent motion" controls height="724" playsinline poster="assets/motion/motion-click_bell.webp?v=317873802b" preload="none" width="1936">
+           <source src="assets/motion/motion-click_bell.webm?v=9fef1514e8" type="video/webm">
+           <source src="assets/motion/motion-click_bell.mp4?v=8ce9cb02a6" type="video/mp4">
+           Your browser does not support video playback.
+          </video>
+         </div>
+         <figcaption>
+          Ring a bell
+         </figcaption>
+        </figure>
+       </div>
+      </div>
+     </div>
+    </div>
+   </section>
+   <section class="section" id="architecture">
+    <div class="page-width">
+     <h2 class="title is-3">Model architecture</h2>
+     <figure class="paper-figure architecture-figure">
+      <img alt="Multi-view encoder, shared causal predictor, and the regularization and conditioning used to train JAM." height="1050" loading="lazy" src="assets/figures/architecture.webp?v=cefccaccd9" width="2400">
+      <figcaption class="architecture-notes">
+       <div>
+        <strong>Scene encoding</strong>
+        Synchronized RGB views become one scene token per observation. Motion alignment links changes between tokens to changes in the images.
+       </div>
+       <div>
+        <strong>World model</strong>
+        The shared causal predictor uses demonstrated actions to estimate the next latent transition. Each state attends to the actions executed before the next observation.
+       </div>
+       <div>
+        <strong>Control policy</strong>
+        The same predictor uses the instruction and scene history to generate an action chunk and forecast its effect. Fresh observations update the history between chunks.
+       </div>
+      </figcaption>
+     </figure>
+    </div>
+   </section>
+   <section class="section" id="results">
+    <div class="page-width">
+     <h2 class="title is-3">Benchmark results</h2>
+     <p class="section-copy">
+      On LIBERO, JAM matches the success of several larger policies with lower query latency.
+      On RoboTwin 2.0, Base improves over Small in both settings. The strongest baselines retain an advantage, particularly on Random.
+     </p>
+     <p class="section-copy training-budget">
+      With BF16 on 80 GB A100 GPUs, training on <strong>LIBERO</strong> takes about 2 hours for 16,000 updates on four GPUs,
+      with a sampled peak of 31.5&nbsp;GiB per GPU.
+      <strong>RoboTwin 2.0 Base</strong> is projected to take about 47 hours for 200,000 updates on eight GPUs,
+      with 55.5&nbsp;GiB per GPU observed at peak in a training profile.
+     </p>
+     <div class="result-comparison">
+      <h3 class="comparison-title">
+       LIBERO
+      </h3>
+      <div aria-label="LIBERO benchmark comparison" class="table-scroll" role="region" tabindex="0">
+       <table aria-label="LIBERO results" class="results-table libero-results">
+        <thead>
+         <tr>
+          <th scope="col">
+           Policy
+          </th>
+          <th scope="col">
+           <abbr title="External embodied pretraining">
+            PT
+           </abbr>
+          </th>
+          <th scope="col">
+           Params (B)
+          </th>
+          <th scope="col">
+           Latency (ms)
+          </th>
+          <th scope="col">
+           Spatial
+          </th>
+          <th scope="col">
+           Object
+          </th>
+          <th scope="col">
+           Goal
+          </th>
+          <th scope="col">
+           Long
+          </th>
+          <th scope="col">
+           Avg.
+          </th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="9" scope="rowgroup">
+           Vision&ndash;language&ndash;action models
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           OpenVLA
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           7.5
+          </td>
+          <td>
+           223.9
+          </td>
+          <td>
+           84.7
+          </td>
+          <td>
+           88.4
+          </td>
+          <td>
+           79.2
+          </td>
+          <td>
+           53.7
+          </td>
+          <td>
+           76.5
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           OpenVLA-OFT
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           7.5
+          </td>
+          <td>
+           <span class="second">
+            85.1
+           </span>
+          </td>
+          <td>
+           97.6
+          </td>
+          <td>
+           98.4
+          </td>
+          <td>
+           97.9
+          </td>
+          <td>
+           94.5
+          </td>
+          <td>
+           97.1
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           &pi;<sub>0.5</sub>
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           3.3
+          </td>
+          <td>
+           259.1
+          </td>
+          <td>
+           98.8
+          </td>
+          <td>
+           98.2
+          </td>
+          <td>
+           98.0
+          </td>
+          <td>
+           92.4
+          </td>
+          <td>
+           96.9
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="9" scope="rowgroup">
+           Video-based action models
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           LingBot-VA
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           5.3
+          </td>
+          <td>
+           4159.7
+          </td>
+          <td>
+           98.5
+          </td>
+          <td>
+           <span class="second">
+            99.6
+           </span>
+          </td>
+          <td>
+           97.2
+          </td>
+          <td>
+           <strong>
+            98.5
+           </strong>
+          </td>
+          <td>
+           <span class="second">
+            98.5
+           </span>
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           Cosmos Policy
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           2.0
+          </td>
+          <td>
+           651.8
+          </td>
+          <td>
+           98.1
+          </td>
+          <td>
+           <strong>
+            100.0
+           </strong>
+          </td>
+          <td>
+           98.2
+          </td>
+          <td>
+           <span class="second">
+            97.6
+           </span>
+          </td>
+          <td>
+           <span class="second">
+            98.5
+           </span>
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           Fast-WAM
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           6.0
+          </td>
+          <td>
+           515.7
+          </td>
+          <td>
+           98.2
+          </td>
+          <td>
+           <strong>
+            100.0
+           </strong>
+          </td>
+          <td>
+           97.0
+          </td>
+          <td>
+           95.2
+          </td>
+          <td>
+           97.6
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="9" scope="rowgroup">
+           Latent-predictive policies
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           LaWAM
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           2.3
+          </td>
+          <td>
+           208.9
+          </td>
+          <td>
+           <strong>
+            99.4
+           </strong>
+          </td>
+          <td>
+           <span class="second">
+            99.6
+           </span>
+          </td>
+          <td>
+           <span class="second">
+            98.4
+           </span>
+          </td>
+          <td>
+           97.0
+          </td>
+          <td>
+           <strong>
+            98.6
+           </strong>
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           JEPA-WAM
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           1.4
+          </td>
+          <td>
+           162.1
+          </td>
+          <td>
+           95.6
+          </td>
+          <td>
+           99.4
+          </td>
+          <td>
+           97.2
+          </td>
+          <td>
+           94.6
+          </td>
+          <td>
+           96.7
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="jam-result">
+          <th scope="row">
+           JAM
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           0.09
+          </td>
+          <td>
+           <strong>
+            25.7
+           </strong>
+          </td>
+          <td>
+           <span class="second">
+            99.2
+           </span>
+          </td>
+          <td>
+           <span class="second">
+            99.6
+           </span>
+          </td>
+          <td>
+           <strong>
+            99.6
+           </strong>
+          </td>
+          <td>
+           95.0
+          </td>
+          <td>
+           98.4
+          </td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <div class="result-comparison">
+      <h3 class="comparison-title">
+       RoboTwin 2.0
+      </h3>
+      <div aria-label="RoboTwin 2.0 benchmark comparison" class="table-scroll" role="region" tabindex="0">
+       <table aria-label="RoboTwin 2.0 results" class="results-table robotwin-results">
+        <thead>
+         <tr>
+          <th scope="col">
+           Policy
+          </th>
+          <th scope="col">
+           <abbr title="External embodied pretraining">
+            PT
+           </abbr>
+          </th>
+          <th scope="col">
+           Params (B)
+          </th>
+          <th scope="col">
+           Clean
+          </th>
+          <th scope="col">
+           Random
+          </th>
+          <th scope="col">
+           Avg.
+          </th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="6" scope="rowgroup">
+           Classical policies (50 Clean/task for training)
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           ACT
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           0.08
+          </td>
+          <td>
+           29.74
+          </td>
+          <td>
+           1.74
+          </td>
+          <td>
+           15.74
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           DP
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           0.10
+          </td>
+          <td>
+           28.04
+          </td>
+          <td>
+           0.64
+          </td>
+          <td>
+           14.34
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="6" scope="rowgroup">
+           Vision&ndash;language&ndash;action models (mixed data)
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           &pi;<sub>0</sub>
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           3.3
+          </td>
+          <td>
+           65.92
+          </td>
+          <td>
+           58.40
+          </td>
+          <td>
+           62.16
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           &pi;<sub>0.5</sub>
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           3.3
+          </td>
+          <td>
+           82.74
+          </td>
+          <td>
+           76.76
+          </td>
+          <td>
+           79.75
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           SmolVLA
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           0.45
+          </td>
+          <td>
+           59.44
+          </td>
+          <td>
+           61.32
+          </td>
+          <td>
+           60.38
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           X-VLA
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           0.9
+          </td>
+          <td>
+           72.80
+          </td>
+          <td>
+           72.84
+          </td>
+          <td>
+           72.82
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           StarVLA-OFT
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           4.5
+          </td>
+          <td>
+           88.18
+          </td>
+          <td>
+           88.32
+          </td>
+          <td>
+           88.25
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="baseline-group">
+          <th colspan="6" scope="rowgroup">
+           Video-based action models (mixed data)
+          </th>
+         </tr>
+         <tr>
+          <th scope="row">
+           LingBot-VA
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           5.3
+          </td>
+          <td>
+           <strong>
+            92.90
+           </strong>
+          </td>
+          <td>
+           <span class="second">
+            91.50
+           </span>
+          </td>
+          <td>
+           <strong>
+            92.20
+           </strong>
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           Motus
+          </th>
+          <td class="pretrain">
+           <span aria-label="Yes">
+            &checkmark;
+           </span>
+          </td>
+          <td>
+           8.0
+          </td>
+          <td>
+           88.66
+          </td>
+          <td>
+           87.02
+          </td>
+          <td>
+           87.84
+          </td>
+         </tr>
+         <tr>
+          <th scope="row">
+           Fast-WAM
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           6.0
+          </td>
+          <td>
+           <span class="second">
+            91.88
+           </span>
+          </td>
+          <td>
+           <strong>
+            91.78
+           </strong>
+          </td>
+          <td>
+           <span class="second">
+            91.83
+           </span>
+          </td>
+         </tr>
+        </tbody>
+        <tbody>
+         <tr class="jam-result">
+          <th scope="row">
+           JAM Small
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           0.09
+          </td>
+          <td>
+           74.84
+          </td>
+          <td>
+           60.36
+          </td>
+          <td>
+           67.60
+          </td>
+         </tr>
+         <tr class="jam-result">
+          <th scope="row">
+           JAM Base
+          </th>
+          <td class="pretrain">
+           <span aria-label="No">
+            &times;
+           </span>
+          </td>
+          <td>
+           0.37
+          </td>
+          <td>
+           83.92
+          </td>
+          <td>
+           71.32
+          </td>
+          <td>
+           77.62
+          </td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+     <p class="table-note">
+      Success rates are percentages. PT denotes external embodied pretraining. LIBERO query latencies were measured on A100.
+     </p>
+    </div>
+   </section>
+   <section class="section" id="representations">
+    <div class="page-width">
+     <h2 class="title is-3">Representation analysis</h2>
+     <p class="section-copy">
+      JAM compresses the RGB views at each time step into one scene token. We test what this token retains about the robot's state and motion, then visualize how the representation evolves during manipulation.
+     </p>
+     <section aria-labelledby="probe-title" class="analysis-block">
+      <h3 class="analysis-title" id="probe-title">Frozen-feature probes on LIBERO</h3>
+      <p class="comparison-note">
+       We fit affine and MLP readouts to frozen features at their original dimensions. The position readout estimates the current end-effector location. The motion readout also receives the recorded actions and estimates the resulting displacement.
+      </p>
+      <div aria-labelledby="probe-title" class="table-scroll" role="region" tabindex="0">
+       <table aria-describedby="probe-note" aria-labelledby="probe-title" class="results-table probe-results">
+        <colgroup span="3"></colgroup>
+        <colgroup span="2"></colgroup>
+        <colgroup span="2"></colgroup>
+        <colgroup span="4"></colgroup>
+        <thead>
+         <tr>
+          <th rowspan="2" scope="col">Visual interface</th>
+          <th rowspan="2" scope="col">Dim.</th>
+          <th rowspan="2" scope="col">Continuity ↑</th>
+          <th colspan="2" scope="colgroup">EEF position error (mm) ↓</th>
+          <th colspan="2" scope="colgroup">Mean motion error (mm) ↓</th>
+          <th colspan="4" scope="colgroup">MLP motion error by horizon (mm) ↓</th>
+         </tr>
+         <tr>
+          <th scope="col">Affine</th>
+          <th scope="col">MLP</th>
+          <th scope="col">Affine</th>
+          <th scope="col">MLP</th>
+          <th scope="col">0.1&nbsp;s</th>
+          <th scope="col">0.2&nbsp;s</th>
+          <th scope="col">0.4&nbsp;s</th>
+          <th scope="col">0.8&nbsp;s</th>
+         </tr>
+        </thead>
+        <tbody>
+         <tr>
+          <th scope="row">DINOv3-S</th>
+          <td>1,536</td>
+          <td>&minus;0.18</td>
+          <td>29.5</td>
+          <td>23.4</td>
+          <td>7.7</td>
+          <td>5.5</td>
+          <td>2.3</td>
+          <td>3.8</td>
+          <td>6.1</td>
+          <td>9.9</td>
+         </tr>
+         <tr>
+          <th scope="row">π<sub>0.5</sub> vision</th>
+          <td>2,304</td>
+          <td>0.07</td>
+          <td>30.5</td>
+          <td><span class="second">21.4</span></td>
+          <td>7.3</td>
+          <td>5.9</td>
+          <td>2.4</td>
+          <td>4.0</td>
+          <td>6.5</td>
+          <td>10.5</td>
+         </tr>
+         <tr>
+          <th scope="row">Fast-WAM VAE</th>
+          <td>18,816</td>
+          <td>&minus;0.13</td>
+          <td>40.6</td>
+          <td>25.9</td>
+          <td>11.9</td>
+          <td>11.0</td>
+          <td>5.2</td>
+          <td>8.6</td>
+          <td>12.4</td>
+          <td>17.9</td>
+         </tr>
+         <tr>
+          <th scope="row">V-JEPA 2.1</th>
+          <td>2,048</td>
+          <td>&minus;0.22</td>
+          <td><span class="second">23.0</span></td>
+          <td>21.6</td>
+          <td>7.4</td>
+          <td>5.4</td>
+          <td>2.2</td>
+          <td>3.7</td>
+          <td>6.1</td>
+          <td>9.5</td>
+         </tr>
+         <tr>
+          <th scope="row">JAM w/o aggregator</th>
+          <td>1,536</td>
+          <td><span class="second">0.20</span></td>
+          <td><strong>18.8</strong></td>
+          <td><strong>17.8</strong></td>
+          <td><strong>6.6</strong></td>
+          <td><span class="second">5.0</span></td>
+          <td><span class="second">2.1</span></td>
+          <td><span class="second">3.4</span></td>
+          <td><span class="second">5.6</span></td>
+          <td><span class="second">9.0</span></td>
+         </tr>
+         <tr class="jam-result">
+          <th scope="row">JAM</th>
+          <td>384</td>
+          <td><strong>0.80</strong></td>
+          <td>29.4</td>
+          <td>22.9</td>
+          <td><span class="second">6.8</span></td>
+          <td><strong>4.8</strong></td>
+          <td><strong>1.9</strong></td>
+          <td><strong>3.2</strong></td>
+          <td><strong>5.4</strong></td>
+          <td><strong>8.8</strong></td>
+         </tr>
+         <tr>
+          <th scope="row">Zero displacement</th>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td>&mdash;</td>
+          <td>55.5</td>
+          <td>55.5</td>
+          <td>16.1</td>
+          <td>31.8</td>
+          <td>61.8</td>
+          <td>112.4</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+      <p class="table-note" id="probe-note">
+       EEF denotes the end effector. Mean motion error averages the four horizons. Continuity is the mean cosine similarity between consecutive feature displacements at 50&nbsp;ms intervals.
+      </p>
+      <p class="section-copy analysis-takeaway">
+       The 384D fused token has the lowest MLP motion error at all four horizons, averaging 4.8&nbsp;mm. The adapted backbone before fusion (JAM w/o aggregator) gives the most accurate current-position estimates.
+      </p>
+     </section>
+     <section aria-labelledby="trajectory-title" class="analysis-block">
+      <h3 class="analysis-title" id="trajectory-title">Latent trajectories</h3>
+      <p class="comparison-note">
+       Each path is a separate 3D PCA projection of the same demonstration. JAM's feature changes follow more consistent local directions, reflected in a continuity score of 0.80 in the original feature space.
+      </p>
+      <figure class="representation-film trajectory-film">
+       <div class="video-frame trajectory-desktop">
+        <video aria-label="Six PCA trajectories with the same LIBERO moka pot demonstration" controls height="780" playsinline poster="assets/representations/trajectory.webp?v=792b46087b" preload="none" width="1668">
+         <source src="assets/representations/trajectory.webm?v=33e73768c4" type="video/webm">
+         <source src="assets/representations/trajectory.mp4?v=3d95732812" type="video/mp4">
+         Your browser does not support video playback.
+        </video>
+       </div>
+       <div class="video-frame trajectory-mobile">
+        <video aria-label="Six PCA trajectories with the same LIBERO moka pot demonstration" controls height="1572" playsinline poster="assets/representations/trajectory-mobile.webp?v=d6d0fa901a" preload="none" width="828">
+         <source src="assets/representations/trajectory-mobile.webm?v=80537ae009" type="video/webm">
+         <source src="assets/representations/trajectory-mobile.mp4?v=7c58890a79" type="video/mp4">
+         Your browser does not support video playback.
+        </video>
+       </div>
+       <figcaption class="trajectory-caption">
+        <span>LIBERO · Place both moka pots on the stove</span>
+        <span class="trace-legend">
+         <span>End-effector height</span>
+         <span>1.00</span>
+         <span aria-hidden="true" class="height-scale"></span>
+         <span>1.23 m</span>
+        </span>
+       </figcaption>
+      </figure>
+     </section>
+     <section aria-labelledby="spatial-title" class="analysis-block">
+      <h3 class="analysis-title" id="spatial-title">Spatial features</h3>
+      <p class="comparison-note">
+       The same RGB frames pass through pretrained DINOv3 and the backbone adapted by JAM. The attention overlays show which image patches the class token attends to. Patch PCA uses color to show the structure of the local features around the robot and objects.
+      </p>
+      <figure class="representation-film feature-film">
+       <div aria-hidden="true" class="feature-labels">
+        <span class="rgb-label">RGB</span>
+        <span class="feature-group">CLS attention</span>
+        <span class="feature-group">Patch PCA</span>
+        <span>DINOv3</span>
+        <span>JAM</span>
+        <span>DINOv3</span>
+        <span>JAM</span>
+       </div>
+       <div class="video-frame">
+        <video aria-label="LIBERO · Place the bowl on the plate, RGB, DINOv3 and JAM attention and patch PCA" controls height="648" playsinline poster="assets/representations/spatial-libero.webp?v=85868164d1" preload="none" width="1632">
+         <source src="assets/representations/spatial-libero.webm?v=fcf4d60822" type="video/webm">
+         <source src="assets/representations/spatial-libero.mp4?v=3ce3dcc5d9" type="video/mp4">
+         Your browser does not support video playback.
+        </video>
+       </div>
+       <figcaption class="feature-caption">
+        <strong>LIBERO · Place the bowl on the plate</strong>
+        <span>External and wrist views</span>
+       </figcaption>
+      </figure>
+      <figure class="representation-film feature-film">
+       <div aria-hidden="true" class="feature-labels">
+        <span class="rgb-label">RGB</span>
+        <span class="feature-group">CLS attention</span>
+        <span class="feature-group">Patch PCA</span>
+        <span>DINOv3</span>
+        <span>JAM</span>
+        <span>DINOv3</span>
+        <span>JAM</span>
+       </div>
+       <div class="video-frame">
+        <video aria-label="RoboTwin 2.0 · Arrange RGB blocks, RGB, DINOv3 and JAM attention and patch PCA" controls height="488" playsinline poster="assets/representations/spatial-robotwin.webp?v=59123baf2f" preload="none" width="1632">
+         <source src="assets/representations/spatial-robotwin.webm?v=fa701a0313" type="video/webm">
+         <source src="assets/representations/spatial-robotwin.mp4?v=72347653f5" type="video/mp4">
+         Your browser does not support video playback.
+        </video>
+       </div>
+       <figcaption class="feature-caption">
+        <strong>RoboTwin 2.0 · Arrange RGB blocks</strong>
+        <span>Head and left wrist views</span>
+       </figcaption>
+      </figure>
+     </section>
+     <section aria-labelledby="alignment-title" class="analysis-block">
+      <h3 class="analysis-title" id="alignment-title">Matching motion across executions</h3>
+      <p class="comparison-note">
+       Two executions of the same task can reach the same motion stage at different times. We use visual features to retrieve the matching moment in another trial on LIBERO-Object and RoboTwin 2.0.
+      </p>
+      <figure class="paper-figure motion-alignment-figure">
+       <div aria-label="Cross-execution motion alignment figure" class="table-scroll" role="region" tabindex="0">
+        <img alt="Similarity maps for seven visual interfaces on four tasks, with frame-based and change-based timing errors on LIBERO-Object and RoboTwin 2.0." height="1656" loading="lazy" src="assets/representations/cross-execution-alignment.webp?v=c50d92d048" width="1980">
+       </div>
+       <figcaption>
+        The maps rank similarities between short-term feature changes, with reference time along the horizontal axis and query time along the vertical axis.
+        The gap between the filled (measured) and open (retrieved) markers shows the timing error.
+        The lower plots compare timing errors from frame features and feature changes at motion onset, mid-transport, and arrival.
+       </figcaption>
+      </figure>
+     </section>
+    </div>
+   </section>
+  </main>
+  <footer class="site-footer">
+   <a href="#top">
+    Back to top
+   </a>
+  </footer>
+ </body>
+</html>
