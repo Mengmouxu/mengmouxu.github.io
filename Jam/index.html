@@ -95,7 +95,7 @@
    <section class="section" id="abstract">
     <div class="page-width abstract-content">
      <h2 class="title is-3">Abstract</h2>
-     <p>World action models (WAMs) provide temporal supervision for robot control by predicting how observations evolve in demonstrations. Existing approaches, however, commonly predict targets in a fixed visual representation space, or rely on costly sampling-based planning over visual goals rather than direct language-guided control. We introduce JAM, a Joint-Embedding Predictive Action Model for multi-view, language-guided robot control that encodes each observation into a single state token for causal modeling over the observation history. Trained end-to-end with transition and action losses, JAM learns a single representation for both dynamics and control. Within this embedding space, the shared causal predictor serves as both a world model and a control policy. Given an action segment, it forecasts the next state transition; given a language instruction, it jointly generates an action chunk and predicts the resulting state change. At deployment, our 0.09B policy generates action chunks in closed loop from RGB observations and language instructions, without proprioceptive input. With a single forward pass per chunk, it runs 10.1&times; and 20.1&times; faster than &pi;<sub>0.5</sub> and Fast-WAM, respectively, while achieving 98.4% average success on LIBERO. On RoboTwin 2.0, a 0.37B variant reaches 77.62% average success.</p>
+     <p>World action models (WAMs) provide temporal supervision for robot control by predicting how observations evolve in demonstrations. Existing approaches, however, commonly predict targets in a fixed visual representation space, or rely on costly sampling-based planning over visual goals rather than direct language-guided control. We introduce JAM, a Joint-Embedding Predictive Action Model for multi-view, language-guided robot control that encodes each observation into a single state token for causal modeling over the observation history. Trained end-to-end with transition and action losses, JAM learns a single representation for both dynamics and control. Within this embedding space, the shared causal predictor serves as both a world model and a control policy. Given an action segment, it forecasts the next state transition; given a language instruction, it jointly generates an action chunk and predicts the resulting state change. At deployment, our 0.09B policy generates action chunks in closed loop from RGB observations and language instructions, without proprioceptive input. With a single forward pass per chunk, it runs 10.1&times; and 20.1&times; faster than &pi;<sub>0.5</sub> and Fast-WAM, respectively, while achieving 98.4% average success on LIBERO. On RoboTwin 2.0, a 0.37B variant reaches 82.54% average success.</p>
     </div>
    </section>
    <section class="section media-section" id="demo">
@@ -1250,10 +1250,10 @@
            74.84
           </td>
           <td>
-           60.36
+           70.04
           </td>
           <td>
-           67.60
+           72.44
           </td>
          </tr>
          <tr class="jam-result">
@@ -1272,10 +1272,10 @@
            83.92
           </td>
           <td>
-           71.32
+           81.16
           </td>
           <td>
-           77.62
+           82.54
           </td>
          </tr>
         </tbody>
