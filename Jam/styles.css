@@ -347,32 +347,16 @@ body {
   outline-offset: 3px;
 }
 
-.media-viewport::before,
-.media-viewport::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 1.7rem;
-  width: 1.25rem;
-  z-index: 1;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-}
-
-.media-viewport::before {
-  left: 0;
-  background: linear-gradient(to right, var(--media-bg), transparent);
-}
-
-.media-viewport::after {
-  right: 0;
-  background: linear-gradient(to left, var(--media-bg), transparent);
-}
-
-.media-rail[data-before] .media-viewport::before,
-.media-rail[data-after] .media-viewport::after {
-  opacity: 1;
+/* Fade a clipped card into the section background during scrolling. */
+.media-track[data-clipping] {
+  --fade-width: clamp(11px, 1.45vw, 19px);
+  --edge-mask: linear-gradient(to right,
+    rgb(0 0 0 / var(--first-edge-opacity, 1)),
+    #000 var(--fade-width),
+    #000 calc(100% - var(--fade-width)),
+    rgb(0 0 0 / var(--last-edge-opacity, 1)));
+  -webkit-mask-image: var(--edge-mask);
+  mask-image: var(--edge-mask);
 }
 
 .rail-arrow {
@@ -388,8 +372,13 @@ body {
   cursor: pointer;
 }
 
-.rail-arrow:hover {
+.rail-arrow:enabled:hover {
   background: #f0f0f0;
+}
+
+.rail-arrow:disabled {
+  cursor: default;
+  opacity: 0.35;
 }
 
 .rail-arrow:focus-visible {
@@ -718,10 +707,6 @@ table.probe-results thead tr:last-child th {
   background: linear-gradient(to right, #440154, #3b528b, #21918c, #5ec962, #fde725);
 }
 
-.feature-film + .feature-film {
-  margin-top: 1.6rem;
-}
-
 .feature-labels {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -821,11 +806,6 @@ table.probe-results thead tr:last-child th {
   .media-track {
     grid-auto-columns: 100%;
   }
-
-  .media-viewport::before,
-  .media-viewport::after {
-    width: 0.8rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -835,11 +815,6 @@ table.probe-results thead tr:last-child th {
 
   .media-track {
     scroll-behavior: auto;
-  }
-
-  .media-viewport::before,
-  .media-viewport::after {
-    transition: none;
   }
 
   .hero-teaser img {
@@ -863,4 +838,16 @@ table.probe-results thead tr:last-child th {
   .results-table .jam-result > th:first-child {
     background: #edf5f4;
   }
+}
+
+.clip-condition {
+  margin-left: .28em;
+  color: #686868;
+  font-size: .84em;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.spatial-rail {
+  margin-top: 1.25rem;
 }
